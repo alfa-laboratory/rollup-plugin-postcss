@@ -1,5 +1,5 @@
 {
-  "name": "rollup-plugin-postcss",
+  "name": "@alfalab/rollup-plugin-postcss",
   "version": "3.0.0",
   "description": "Seamless integration between Rollup and PostCSS",
   "main": "dist/index.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/egoist/rollup-plugin-postcss.git"
+    "url": "git+https://github.com/alfa-laboratory/rollup-plugin-postcss.git"
   },
   "keywords": [
     "postcss",
@@ -24,13 +24,13 @@
   "author": "EGOIST <0x142857@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/egoist/rollup-plugin-postcss/issues"
+    "url": "https://github.com/alfa-laboratory/rollup-plugin-postcss.git/issues"
   },
   "engines": {
     "node": ">=10"
   },
   "types": "./types/index.d.ts",
-  "homepage": "https://github.com/egoist/rollup-plugin-postcss#readme",
+  "homepage": "https://github.com/alfa-laboratory/rollup-plugin-postcss.git#readme",
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",

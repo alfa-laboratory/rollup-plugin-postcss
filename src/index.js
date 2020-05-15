@@ -17,13 +17,16 @@ function inferOption(option, defaultValue) {
 
 export default (options = {}) => {
   const filter = createFilter(options.include, options.exclude)
-  const postcssPlugins = Array.isArray(options.plugins) ?
-    options.plugins.filter(Boolean) :
-    options.plugins
-  const { sourceMap } = options
+  const postcssPlugins = Array.isArray(options.plugins)
+    ? options.plugins.filter(Boolean)
+    : options.plugins
+  const { sourceMap, dir } = options
   const postcssLoaderOptions = {
     /** Inject CSS as `<style>` to `<head>` */
-    inject: typeof options.inject === 'function' ? options.inject : inferOption(options.inject, {}),
+    inject:
+      typeof options.inject === 'function'
+        ? options.inject
+        : inferOption(options.inject, {}),
     /** Extract CSS */
     extract: typeof options.extract === 'undefined' ? false : options.extract,
     /** CSS modules */
@@ -43,8 +46,8 @@ export default (options = {}) => {
       plugins: postcssPlugins,
       syntax: options.syntax,
       stringifier: options.stringifier,
-      exec: options.exec
-    }
+      exec: options.exec,
+    },
   }
   let use = ['sass', 'stylus', 'less']
   if (Array.isArray(options.use)) {
@@ -53,7 +56,7 @@ export default (options = {}) => {
     use = [
       ['sass', options.use.sass || {}],
       ['stylus', options.use.stylus || {}],
-      ['less', options.use.less || {}]
+      ['less', options.use.less || {}],
     ]
   }
 
@@ -62,7 +65,7 @@ export default (options = {}) => {
   const loaders = new Loaders({
     use,
     loaders: options.loaders,
-    extensions: options.extensions
+    extensions: options.extensions,
   })
 
   const extracted = new Map()
@@ -84,13 +87,14 @@ export default (options = {}) => {
         sourceMap,
         dependencies: new Set(),
         warn: this.warn.bind(this),
-        plugin: this
+        plugin: this,
+        separateCssFiles: options.separateCssFiles,
       }
 
       const result = await loaders.process(
         {
           code,
-          map: undefined
+          map: undefined,
         },
         loaderContext
       )
@@ -103,30 +107,30 @@ export default (options = {}) => {
         extracted.set(id, result.extracted)
         return {
           code: result.code,
-          map: { mappings: '' }
+          map: { mappings: '' },
         }
       }
 
       return {
         code: result.code,
-        map: result.map || { mappings: '' }
+        map: result.map || { mappings: '' },
       }
     },
 
     augmentChunkHash() {
       if (extracted.size === 0) return
-      const extractedValue = [...extracted].reduce((object, [key, value]) => ({
-        ...object,
-        [key]: value
-      }), {})
+      const extractedValue = [...extracted].reduce(
+        (object, [key, value]) => ({
+          ...object,
+          [key]: value,
+        }),
+        {}
+      )
       return JSON.stringify(extractedValue)
     },
 
     async generateBundle(options_, bundle) {
-      if (
-        extracted.size === 0 ||
-        !(options_.dir || options_.file)
-      ) return
+      if (extracted.size === 0 || !(options_.dir || options_.file)) return
 
       // TODO: support `[hash]`
       const dir = options_.dir || path.dirname(options_.file)
@@ -134,13 +138,15 @@ export default (options = {}) => {
         options_.file ||
         path.join(
           options_.dir,
-          Object.keys(bundle).find(fileName => bundle[fileName].isEntry)
+          Object.keys(bundle).find((fileName) => bundle[fileName].isEntry)
         )
       const getExtracted = () => {
         let fileName = `${path.basename(file, path.extname(file))}.css`
         if (typeof postcssLoaderOptions.extract === 'string') {
           if (path.isAbsolute(postcssLoaderOptions.extract)) {
-            fileName = normalizePath(path.relative(dir, postcssLoaderOptions.extract))
+            fileName = normalizePath(
+              path.relative(dir, postcssLoaderOptions.extract)
+            )
           } else {
             fileName = normalizePath(postcssLoaderOptions.extract)
           }
@@ -182,7 +188,18 @@ export default (options = {}) => {
           code,
           map: sourceMap === true && concat.sourceMap,
           codeFileName: fileName,
-          mapFileName: fileName + '.map'
+          mapFileName: fileName + '.map',
+          separated: options.separateCssFiles
+            ? entries.map((entry) => {
+                const fileDist = entry.id.replace('src', dir)
+                const relative = path.relative(dir, fileDist)
+
+                return {
+                  code: entry.code,
+                  codeFileName: relative,
+                }
+              })
+            : null,
         }
       }
 
@@ -193,7 +210,8 @@ export default (options = {}) => {
         }
       }
 
-      let { code, codeFileName, map, mapFileName } = getExtracted()
+      let { code, codeFileName, map, mapFileName, separated } = getExtracted()
+
       // Perform cssnano on the extracted file
       if (postcssLoaderOptions.minimize) {
         const cssOptions = postcssLoaderOptions.minimize
@@ -213,18 +231,29 @@ export default (options = {}) => {
         }
       }
 
-      this.emitFile({
-        fileName: codeFileName,
-        type: 'asset',
-        source: code
-      })
-      if (map) {
-        this.emitFile({
-          fileName: mapFileName,
-          type: 'asset',
-          source: map
+      if (separated) {
+        separated.forEach((entry) => {
+          this.emitFile({
+            fileName: entry.codeFileName.replace('.module', ''),
+            type: 'asset',
+            source: entry.code,
+          })
         })
+      } else {
+        this.emitFile({
+          fileName: codeFileName.replace('.module', ''),
+          type: 'asset',
+          source: code,
+        })
+
+        if (map) {
+          this.emitFile({
+            fileName: mapFileName,
+            type: 'asset',
+            source: map,
+          })
+        }
       }
-    }
+    },
   }
 }
