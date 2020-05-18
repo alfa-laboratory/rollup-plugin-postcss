@@ -214,6 +214,8 @@ export default {
       }
     }
 
+
+    // add css absolute path so that `addCssImports` replace it to require
     if (this.separateCssFiles) {
       output +=
         '\n' +

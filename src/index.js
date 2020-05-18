@@ -3,6 +3,7 @@ import { createFilter } from 'rollup-pluginutils'
 import Concat from 'concat-with-sourcemaps'
 import Loaders from './loaders'
 import normalizePath from './utils/normalize-path'
+import { addCssImports } from './add-css-imports'
 
 /**
  * The options that could be `boolean` or `object`
@@ -257,3 +258,5 @@ export default (options = {}) => {
     },
   }
 }
+
+export { addCssImports }
