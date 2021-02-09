@@ -1,6 +1,6 @@
 {
   "name": "@alfalab/rollup-plugin-postcss",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Seamless integration between Rollup and PostCSS",
   "main": "dist/index.js",
   "files": [
