@@ -73,7 +73,7 @@ export default {
     const autoModules = options.autoModules !== false && isModuleFile(this.id)
     const supportModules = options.modules || autoModules
     if (supportModules) {
-      plugins.unshift(
+      plugins.push(
         require('postcss-modules')({
           // In tests
           // Skip hash in names since css content on windows and linux would differ because of `new line` (\r?\n)
@@ -129,6 +129,12 @@ export default {
         /* noop */
       })
       plugins.push(noopPlugin())
+    }
+
+    if (code.includes('/* css-variables: false */')) {
+      plugins.push(
+        require('postcss-custom-properties')({ preserve: false }).Once
+      )
     }
 
     const result = await postcss(plugins).process(code, postcssOptions)
@@ -213,7 +219,6 @@ export default {
           });`
       }
     }
-
 
     // add css absolute path so that `addCssImports` replace it to require
     if (this.separateCssFiles) {
