@@ -5,6 +5,7 @@ import findPostcssConfig from 'postcss-load-config'
 import { identifier } from 'safe-identifier'
 import humanlizePath from './utils/humanlize-path'
 import normalizePath from './utils/normalize-path'
+import { generateClassNameHash } from './generate-class-name-hash'
 
 const styleInjectPath = require
   .resolve('style-inject/dist/style-inject.es')
@@ -181,6 +182,15 @@ export default {
       }
     }
 
+    const folderName = path.basename(path.dirname(this.id))
+    const hash = generateClassNameHash(
+      this.packageName,
+      this.packageVersion,
+      folderName
+    )
+
+    result.css = `/* hash: ${hash} */\n${result.css}`;
+
     const cssVariableName = identifier('css', true)
     if (shouldExtract) {
       output += `export default ${JSON.stringify(modulesExported[this.id])};`
@@ -213,7 +223,6 @@ export default {
           });`
       }
     }
-
 
     // add css absolute path so that `addCssImports` replace it to require
     if (this.separateCssFiles) {

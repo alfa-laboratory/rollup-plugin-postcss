@@ -3,7 +3,6 @@ import { createFilter } from 'rollup-pluginutils'
 import Concat from 'concat-with-sourcemaps'
 import Loaders from './loaders'
 import normalizePath from './utils/normalize-path'
-import { addCssImports } from './add-css-imports'
 
 /**
  * The options that could be `boolean` or `object`
@@ -90,6 +89,8 @@ export default (options = {}) => {
         warn: this.warn.bind(this),
         plugin: this,
         separateCssFiles: options.separateCssFiles,
+        packageName: options.packageName,
+        packageVersion: options.packageVersion,
       }
 
       const result = await loaders.process(
@@ -259,4 +260,5 @@ export default (options = {}) => {
   }
 }
 
-export { addCssImports }
+export * from './add-css-imports'
+export * from './generate-class-name-hash'
